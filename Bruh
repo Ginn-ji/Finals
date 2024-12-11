@@ -1,36 +1,199 @@
-# This is a basic workflow to help you get started with Actions
+import java.util.Scanner;
 
-name: CI
+public class LabExam {
+    private Object[] elements;
+    private int size;
+    private int capacity;
 
-# Controls when the workflow will run
-on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    public LabExam(int initialCapacity) {
+        this.capacity = initialCapacity;
+        this.size = 0;
+        this.elements = new Object[initialCapacity];
+    }
 
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
+    private boolean isFull() {
+        return size == capacity;
+    }
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
-jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
-    runs-on: ubuntu-latest
+    private void resize() {
+        capacity *= 2;
+        Object[] newArray = new Object[capacity];
+        System.arraycopy(elements, 0, newArray, 0, size);
+        elements = newArray;
+    }
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
-    steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v4
+    public void add(Object element) {
+        if (contains(element)) {
+            System.out.println(element + " already exists.");
+            return;
+        }
+        if (isFull()) {
+            resize();
+        }
+        elements[size++] = element;
+        System.out.println(element + " added.");
+    }
 
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
+    public boolean contains(Object element) {
+        for (int i = 0; i < size; i++) {
+            if (elements[i].equals(element)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
-        run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+    public LabExam union(LabExam otherSet) {
+        LabExam resultSet = new LabExam(this.capacity + otherSet.capacity);
+        for (int i = 0; i < size; i++) {
+            resultSet.add(elements[i]);
+        }
+        for (int i = 0; i < otherSet.size; i++) {
+            resultSet.add(otherSet.elements[i]);
+        }
+        return resultSet;
+    }
+
+    public LabExam intersection(LabExam otherSet) {
+        LabExam resultSet = new LabExam(Math.min(this.size, otherSet.size));
+        for (int i = 0; i < size; i++) {
+            Object element = elements[i];
+            if (otherSet.contains(element)) {
+                resultSet.add(element);
+            }
+        }
+        return resultSet;
+    }
+
+    public LabExam difference(LabExam otherSet) {
+        LabExam resultSet = new LabExam(this.capacity);
+        for (int i = 0; i < otherSet.size; i++) {
+            Object element = otherSet.elements[i];
+            if (!this.contains(element)) {
+                resultSet.add(element);
+            }
+        }
+        return resultSet;
+    }
+
+    public boolean isSubset(LabExam otherSet) {
+        for (int i = 0; i < otherSet.size; i++) {
+            if (!this.contains(otherSet.elements[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public void displaySet() {
+        System.out.print("Set: {");
+        for (int i = 0; i < size; i++) {
+            System.out.print(elements[i]);
+            if (i < size - 1) {
+                System.out.print(", ");
+            }
+        }
+        System.out.println("}");
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        LabExam setA = new LabExam(10);
+        LabExam setB = new LabExam(10);
+
+        boolean exit = false;
+        while (!exit) {
+            System.out.println("\nChoose an operation:");
+            System.out.println("1. Insert element to Set A");
+            System.out.println("2. Insert element to Set B");
+            System.out.println("3. Union of Set A and Set B");
+            System.out.println("4. Intersection of Set A and Set B");
+            System.out.println("5. Difference (Set B - Set A)");
+            System.out.println("6. Check if Set B is a subset of Set A");
+            System.out.println("7. Display Sets");
+            System.out.println("8. Exit");
+            System.out.print("Your choice: ");
+            int choice = scanner.nextInt();
+            scanner.nextLine();  // consume newline
+
+            switch (choice) {
+                case 1:
+                    System.out.println("Enter elements for Set A (type 'done' to stop):");
+                    while (true) {
+                        String input = scanner.nextLine();
+                        if (input.equalsIgnoreCase("done")) {
+                            break;
+                        }
+                        Object element = parseInput(input);
+                        setA.add(element);
+                    }
+                    break;
+
+                case 2:
+                    System.out.println("Enter elements for Set B (type 'done' to stop):");
+                    while (true) {
+                        String input = scanner.nextLine();
+                        if (input.equalsIgnoreCase("done")) {
+                            break;
+                        }
+                        Object element = parseInput(input);
+                        setB.add(element);
+                    }
+                    break;
+
+                case 3:
+                    LabExam unionSet = setA.union(setB);
+                    System.out.println("Union of Set A and Set B:");
+                    unionSet.displaySet();
+                    break;
+
+                case 4:
+                    LabExam intersectionSet = setA.intersection(setB);
+                    System.out.println("Intersection of Set A and Set B:");
+                    intersectionSet.displaySet();
+                    break;
+
+                case 5:
+                    LabExam diffSet = setA.difference(setB);
+                    System.out.println("Difference of Set B - Set A:");
+                    diffSet.displaySet();
+                    break;
+
+                case 6:
+                    boolean isSubset = setA.isSubset(setB);
+                    System.out.println("Is Set B a subset of Set A? " + isSubset);
+                    break;
+
+                case 7:
+                    System.out.println("Set A:");
+                    setA.displaySet();
+                    System.out.println("Set B:");
+                    setB.displaySet();
+                    break;
+
+                case 8:
+                    exit = true;
+                    System.out.println("Exiting...");
+                    break;
+
+                default:
+                    System.out.println("Invalid choice. Try again.");
+            }
+        }
+
+        scanner.close();
+    }
+
+    private static Object parseInput(String input) {
+        try {
+            if (input.contains(".")) {
+                return Double.parseDouble(input);
+            } else {
+                return Integer.parseInt(input);
+            }
+        } catch (NumberFormatException e) {
+            return input;
+        }
+    }
+}
